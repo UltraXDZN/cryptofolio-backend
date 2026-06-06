@@ -26,7 +26,7 @@ public class Coin {
     @Column(nullable = false, length = 10)
     private String symbol;
 
-    @Column(precision = 20, scale = 2)
+    @Column(precision = 20, scale = 8)
     private BigDecimal price = BigDecimal.ZERO;
 
     @Column(name = "market_cap", precision = 20, scale = 2)
@@ -41,13 +41,13 @@ public class Coin {
     @Column(name = "total_volume", precision = 20, scale = 2)
     private BigDecimal totalVolume = BigDecimal.ZERO;
 
-    @Column(name = "high_24h", precision = 20, scale = 2)
+    @Column(name = "high_24h", precision = 20, scale = 8)
     private BigDecimal high24h = BigDecimal.ZERO;
 
-    @Column(name = "low_24h", precision = 20, scale = 2)
+    @Column(name = "low_24h", precision = 20, scale = 8)
     private BigDecimal low24h = BigDecimal.ZERO;
 
-    @Column(name = "price_change_24h", precision = 20, scale = 2)
+    @Column(name = "price_change_24h", precision = 20, scale = 8)
     private BigDecimal priceChange24h = BigDecimal.ZERO;
 
     @Column(name = "price_change_percentage_24h", precision = 10, scale = 2)

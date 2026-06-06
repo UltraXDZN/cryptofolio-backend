@@ -28,10 +28,10 @@ public class PortfolioRecord {
     @JoinColumn(name = "coin_id", nullable = false)
     private Coin coin;
 
-    @Column(name = "bought_price", precision = 20, scale = 2)
+    @Column(name = "bought_price", precision = 20, scale = 8)
     private BigDecimal boughtPrice = BigDecimal.ZERO;
 
-    @Column(name = "exchange_price", precision = 20, scale = 2)
+    @Column(name = "exchange_price", precision = 20, scale = 8)
     private BigDecimal exchangePrice = BigDecimal.ZERO;
 
     @Column(precision = 20, scale = 8)

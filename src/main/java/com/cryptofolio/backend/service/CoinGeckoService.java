@@ -56,7 +56,7 @@ public class CoinGeckoService {
         List<Market> markets = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/coins/markets")
-                        .queryParam("vs_currency", "usd")
+                        .queryParam("vs_currency", "eur")
                         .queryParam("order", "market_cap_desc")
                         .queryParam("per_page", 250)
                         .queryParam("page", 1)

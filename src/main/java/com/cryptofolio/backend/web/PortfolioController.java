@@ -274,6 +274,22 @@ public class PortfolioController {
         return PortfolioDto.from(recordRepository.save(record));
     }
 
+    // DELETE /api/profile/{hashId}/transaction/{transactionId}/  (single record)
+    @DeleteMapping({
+        "/profile/{hashId}/transaction/{transactionId}",
+        "/profile/{hashId}/transaction/{transactionId}/"
+    })
+    @Transactional
+    public ResponseEntity<?> deleteTransaction(
+            @PathVariable String hashId, @PathVariable Long transactionId) {
+        PortfolioProfile profile = requireProfile(hashId);
+        PortfolioRecord record = recordRepository
+                .findByIdAndProfile(transactionId, profile)
+                .orElseThrow(() -> ApiException.notFound("Transaction not found"));
+        recordRepository.delete(record);
+        return ResponseEntity.noContent().build();
+    }
+
     // DELETE /api/profile/{hashId}/remove_coin/{coinId}/
     @DeleteMapping({
         "/profile/{hashId}/remove_coin/{coinId}",

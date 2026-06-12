@@ -26,7 +26,9 @@ public record PortfolioDto(
         @JsonProperty("current_price") Double currentPrice,
         @JsonProperty("coin_image") String coinImage,
         @JsonProperty("transaction_type") String transactionType,
-        @JsonProperty("total_quantity") Double totalQuantity) {
+        @JsonProperty("total_quantity") Double totalQuantity,
+        @JsonProperty("sent_from") String sentFrom,
+        @JsonProperty("sent_to") String sentTo) {
 
     private static String str(BigDecimal value) {
         return value == null ? null : value.toPlainString();
@@ -58,6 +60,8 @@ public record PortfolioDto(
                 currentPrice,
                 coin.getImage(),
                 r.getTransactionType(),
-                totalQuantity);
+                totalQuantity,
+                r.getSentFrom(),
+                r.getSentTo());
     }
 }

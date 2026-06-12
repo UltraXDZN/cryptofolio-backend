@@ -13,11 +13,15 @@ import com.cryptofolio.backend.repository.PortfolioProfileRepository;
 import com.cryptofolio.backend.repository.PortfolioRecordRepository;
 import com.cryptofolio.backend.service.CoinGeckoService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -339,6 +344,70 @@ public class PortfolioController {
         PortfolioProfile profile = requireProfile(hashId);
         return profile.getFilteredCoins().stream().map(CoinDto::from).toList();
     }
+
+    // GET /api/profile/{hashId}/historical_value/?range=
+    // Returns [{date, value}] — portfolio value at each past date using real historical prices.
+    // range: daily=1d, weekly=7d, monthly=30d, yearly=365d, all-time=max
+    @GetMapping({"/profile/{hashId}/historical_value", "/profile/{hashId}/historical_value/"})
+    public List<HistoricalValuePoint> getHistoricalValue(
+            @PathVariable String hashId,
+            @RequestParam(defaultValue = "monthly") String range) {
+        PortfolioProfile profile = requireProfile(hashId);
+        List<PortfolioRecord> records = recordRepository.findByProfile(profile);
+        if (records.isEmpty()) return List.of();
+
+        String days = switch (range) {
+            case "daily"    -> "1";
+            case "weekly"   -> "7";
+            case "monthly"  -> "30";
+            case "yearly"   -> "365";
+            default         -> "max";
+        };
+
+        // Group transactions by coin, sorted by date asc
+        Map<String, List<PortfolioRecord>> byCoin = new LinkedHashMap<>();
+        for (PortfolioRecord r : records) {
+            byCoin.computeIfAbsent(r.getCoin().getCoinId(), k -> new ArrayList<>()).add(r);
+        }
+        for (List<PortfolioRecord> list : byCoin.values()) {
+            list.sort(Comparator.comparing(PortfolioRecord::getAddedAt));
+        }
+
+        // For each price point in history, sum qty_held × price across all coins
+        Map<String, Double> dailyValues = new TreeMap<>();
+
+        for (Map.Entry<String, List<PortfolioRecord>> entry : byCoin.entrySet()) {
+            List<List<Double>> prices = coinGeckoService.getHistoricalPrices(entry.getKey(), days);
+            List<PortfolioRecord> coinRecords = entry.getValue();
+
+            for (List<Double> point : prices) {
+                if (point == null || point.size() < 2) continue;
+                Instant instant = Instant.ofEpochMilli(point.get(0).longValue());
+                double price = point.get(1);
+                String dateStr = instant.atZone(ZoneOffset.UTC).toLocalDate().toString();
+                OffsetDateTime pointDt = OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
+
+                double qty = 0;
+                for (PortfolioRecord r : coinRecords) {
+                    if (!r.getAddedAt().isAfter(pointDt)) {
+                        double txQty = r.getQuantity() == null ? 0 : r.getQuantity().doubleValue();
+                        String type = r.getTransactionType();
+                        boolean in  = "BUY".equals(type) || ("TRANSFER".equals(type) && hasText(r.getSentTo()));
+                        boolean out = "SELL".equals(type) || ("TRANSFER".equals(type) && hasText(r.getSentFrom()));
+                        if (in)  qty += txQty;
+                        else if (out) qty -= txQty;
+                    }
+                }
+                if (qty > 0) dailyValues.merge(dateStr, qty * price, Double::sum);
+            }
+        }
+
+        return dailyValues.entrySet().stream()
+                .map(e -> new HistoricalValuePoint(e.getKey(), e.getValue()))
+                .toList();
+    }
+
+    public record HistoricalValuePoint(String date, double value) {}
 
     // --- small helpers ---
 

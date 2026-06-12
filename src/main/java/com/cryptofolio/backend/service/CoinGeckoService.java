@@ -13,6 +13,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 /** Fetches market data from CoinGecko and upserts it into the coin table. */
 @Service
@@ -29,6 +30,32 @@ public class CoinGeckoService {
         this.coinRepository = coinRepository;
         this.apiKey = apiKey;
         this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record MarketChart(List<List<Double>> prices) {}
+
+    /**
+     * Fetches daily historical prices for a coin from CoinGecko.
+     * Returns list of [timestamp_ms, price] pairs. Returns empty list on error.
+     */
+    public List<List<Double>> getHistoricalPrices(String coinId, String days) {
+        try {
+            MarketChart chart = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/coins/{id}/market_chart")
+                            .queryParam("vs_currency", "eur")
+                            .queryParam("days", days)
+                            .queryParam("interval", "daily")
+                            .build(coinId))
+                    .header("accept", "application/json")
+                    .header("x-cg-demo-api-key", apiKey == null ? "" : apiKey)
+                    .retrieve()
+                    .body(MarketChart.class);
+            return chart != null && chart.prices() != null ? chart.prices() : List.of();
+        } catch (RestClientException e) {
+            return List.of();
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -46,7 +46,8 @@ public class CoinGeckoService {
                             .path("/coins/{id}/market_chart")
                             .queryParam("vs_currency", "eur")
                             .queryParam("days", days)
-                            .queryParam("interval", "daily")
+                            // No interval → CoinGecko auto-selects granularity:
+                            // days=1 → ~5min, days≤90 → hourly, days>90 → daily
                             .build(coinId))
                     .header("accept", "application/json")
                     .header("x-cg-demo-api-key", apiKey == null ? "" : apiKey)

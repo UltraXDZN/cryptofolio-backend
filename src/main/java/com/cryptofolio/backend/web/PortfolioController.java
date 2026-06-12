@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -384,7 +386,14 @@ public class PortfolioController {
                 if (point == null || point.size() < 2) continue;
                 Instant instant = Instant.ofEpochMilli(point.get(0).longValue());
                 double price = point.get(1);
-                String dateStr = instant.atZone(ZoneOffset.UTC).toLocalDate().toString();
+                // Preserve time component for short ranges so intraday points are not collapsed.
+                // daily (5-min data): keep minute precision; weekly (hourly): keep hour precision;
+                // monthly+ (daily data): date-only is sufficient.
+                String dateStr = switch (range) {
+                    case "daily"  -> instant.truncatedTo(ChronoUnit.MINUTES).toString();
+                    case "weekly" -> instant.truncatedTo(ChronoUnit.HOURS).toString();
+                    default       -> instant.atZone(ZoneOffset.UTC).toLocalDate().toString();
+                };
                 OffsetDateTime pointDt = OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
 
                 double qty = 0;

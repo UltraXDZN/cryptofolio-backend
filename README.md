@@ -1,7 +1,6 @@
 # Cryptofolio Backend (Spring Boot)
 
-A Spring Boot port of the original Django REST Framework backend. It exposes the
-exact same `/api/...` contract the Svelte frontend already uses, on port **8000**.
+Exposes `/api/...` routes consumed by the Svelte frontend, on port **8000**.
 
 ## Stack
 
@@ -63,10 +62,7 @@ All routes are under `/api` and accept an optional trailing slash.
 | GET    | `/api/profile/{hashId}/filtered_coins/list/` | List filtered coins |
 | POST   | `/api/profile/{hashId}/filtered_coins/update/` | Replace filtered coins (`coin_ids`) |
 
-## Notes on parity with the Django backend
+## Notes
 
-- Decimal fields are serialized as **strings** and `current_price` as a **number**,
-  matching Django REST Framework's defaults so the frontend needs no changes.
-- The original Django `remove_coin` view looked coins up by `name`; this port looks
-  up by `coin_id` first, then falls back to `name`, and deletes all matching records.
-- This is a fresh PostgreSQL database — data from the old `db.sqlite3` is not migrated.
+- Decimal fields are serialized as **strings** and `current_price` as a **number**.
+- `remove_coin` looks up by `coin_id` first, then falls back to `name`, and deletes all matching records.

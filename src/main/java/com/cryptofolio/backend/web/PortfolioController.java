@@ -418,6 +418,15 @@ public class PortfolioController {
 
     public record HistoricalValuePoint(String date, double value) {}
 
+    // GET /api/coin/{coinId}/history/?days=
+    // Raw CoinGecko price history for one coin: [[timestamp_ms, price], ...]
+    @GetMapping({"/coin/{coinId}/history", "/coin/{coinId}/history/"})
+    public List<List<Double>> getCoinHistory(
+            @PathVariable String coinId,
+            @RequestParam(defaultValue = "30") String days) {
+        return coinGeckoService.getHistoricalPrices(coinId, days);
+    }
+
     // --- small helpers ---
 
     private static boolean isBlank(String s) {

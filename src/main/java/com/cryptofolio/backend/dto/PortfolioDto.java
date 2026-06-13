@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 public record PortfolioDto(
         @JsonProperty("id") Long id,
         @JsonProperty("coin") Long coin,
+        @JsonProperty("coin_id") String coinId,
         @JsonProperty("coin_symbol") String coinSymbol,
         @JsonProperty("coin_name") String coinName,
         @JsonProperty("quantity") String quantity,
@@ -49,6 +50,7 @@ public record PortfolioDto(
         return new PortfolioDto(
                 r.getId(),
                 coin.getId(),
+                coin.getCoinId(),
                 coin.getSymbol(),
                 coin.getName(),
                 quantity,

@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -18,6 +20,8 @@ import org.springframework.web.client.RestClientException;
 /** Fetches market data from CoinGecko and upserts it into the coin table. */
 @Service
 public class CoinGeckoService {
+
+    private static final Logger log = LoggerFactory.getLogger(CoinGeckoService.class);
 
     private final CoinRepository coinRepository;
     private final RestClient restClient;
@@ -55,6 +59,7 @@ public class CoinGeckoService {
                     .body(MarketChart.class);
             return chart != null && chart.prices() != null ? chart.prices() : List.of();
         } catch (RestClientException e) {
+            log.warn("CoinGecko history fetch failed for {}: {}", coinId, e.getMessage());
             return List.of();
         }
     }
